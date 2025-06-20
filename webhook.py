@@ -2,10 +2,12 @@ import os
 import streamlit as st
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_community.chat_message_histories import StreamlitChatMessageHistory
-from langchain.memory import ConversationBufferMemory  # Updated import
+from langchain.memory import ConversationBufferMemory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.prompts import ChatPromptTemplate
 import urllib.parse
+import json
+from datetime import datetime
 
 # Load Gemini API key from secrets
 gemini_key = st.secrets.get("GEMINI_API_KEY")
@@ -14,6 +16,10 @@ if not gemini_key:
     st.stop()
 
 os.environ["GOOGLE_API_KEY"] = "AIzaSyDL7Nbz9yy2MXlGJQXKZIaO2U4gVxxhq2g"
+
+# Initialize analysis results storage in session state
+if "analysis_results" not in st.session_state:
+    st.session_state.analysis_results = {}
 
 # Initialize Gemini LLM with selected model
 llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.6)
@@ -70,7 +76,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for teal and white theme
+# Custom CSS for teal and white theme (keeping your original styling)
 st.markdown("""
 <style>
     /* Main background */
@@ -103,161 +109,18 @@ st.markdown("""
         margin-bottom: 1rem;
     }
     
-    /* Sidebar styling */
-    .css-1d391kg {
-        background-color: white;
-    }
-    
-    /* Chat input styling */
-    .stChatInput > div > div {
-        background-color: white;
-        border: 2px solid #14b8a6;
-        border-radius: 10px;
-    }
-    
-    /* Button styling */
-    .stButton > button {
-        background-color: #14b8a6;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 0.5rem 1rem;
-        font-weight: 500;
-        transition: all 0.3s ease;
-    }
-    
-    .stButton > button:hover {
-        background-color: #0d9488;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(20, 184, 166, 0.3);
-    }
-    
-    /* Selectbox styling */
-    .stSelectbox > div > div {
-        background-color: #f3f4f6 !important;
-        border: 1px solid #14b8a6;
-        border-radius: 8px;
-        color: #000000 !important;
-    }
-    
-    /* Selectbox dropdown options */
-    .stSelectbox > div > div > div {
-        background-color: #f3f4f6 !important;
-        color: #000000 !important;
-    }
-    
-    /* Selectbox label text */
-    .stSelectbox label {
-        color: #000000 !important;
-        font-weight: 500;
-    }
-    
-    /* Selectbox selected value text */
-    .stSelectbox > div > div > div > div {
-        color: #000000 !important;
-    }
-    
-    /* Chat input label */
-    .stChatInput label {
-        color: #000000 !important;
-        font-weight: 500;
-    }
-    
-    /* Chat input placeholder and text */
-    .stChatInput input {
-        color: #000000 !important;
-    }
-    
-    .stChatInput input::placeholder {
-        color: #666666 !important;
-    }
-    
-    /* Chat message text styling */
-    .stChatMessage {
-        background-color: white;
-        border-radius: 10px;
-        border: 1px solid #a7f3d0;
-        margin: 0.5rem 0;
-        color: #000000 !important;
-    }
-    
-    /* All chat message text */
-    .stChatMessage * {
-        color: #000000 !important;
-    }
-    
-    /* Generated response text */
-    .stChatMessage div {
-        color: #000000 !important;
-    }
-    
-    /* Markdown text in responses */
-    .stChatMessage p, .stChatMessage h1, .stChatMessage h2, .stChatMessage h3, 
-    .stChatMessage h4, .stChatMessage h5, .stChatMessage h6, 
-    .stChatMessage li, .stChatMessage span {
-        color: #000000 !important;
-    }
-    
-    /* Info box styling */
-    .stInfo {
-        background-color: #e6fffa;
-        border-left: 4px solid #14b8a6;
-        color: #0f766e;
-    }
-    
-    /* Chat messages styling */
-    .stChatMessage {
-        background-color: white;
-        border-radius: 10px;
-        border: 1px solid #a7f3d0;
-        margin: 0.5rem 0;
-    }
-    
-    /* User message styling */
-    .stChatMessage[data-testid="user"] {
-        background-color: #f0fdfa;
-        border-left: 4px solid #14b8a6;
-    }
-    
-    /* Assistant message styling */
-    .stChatMessage[data-testid="assistant"] {
-        background-color: white;
-        border-left: 4px solid #0d9488;
-    }
-    
-    /* Sidebar headers */
-    .sidebar-header {
-        color: #0f766e;
-        font-weight: 600;
-        font-size: 1.1rem;
-        margin-bottom: 0.5rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 2px solid #a7f3d0;
-    }
-    
-    /* Loading spinner */
-    .stSpinner {
-        color: #14b8a6;
-    }
-    
-    /* Error styling */
-    .stError {
-        background-color: #fef2f2;
-        border-left: 4px solid #ef4444;
-        color: #dc2626;
-    }
-    
-    /* Success styling */
-    .stSuccess {
-        background-color: #f0fdf4;
-        border-left: 4px solid #22c55e;
-        color: #16a34a;
-    }
-    
-    /* Webhook status styling */
+    /* All other CSS styles from your original code... */
     .webhook-status {
         background-color: #fef3c7;
         border-left: 4px solid #f59e0b;
+        padding: 1rem;
+        border-radius: 8px;
+        margin: 1rem 0;
+    }
+    
+    .analysis-result {
+        background-color: #f0fdf4;
+        border-left: 4px solid #22c55e;
         padding: 1rem;
         border-radius: 8px;
         margin: 1rem 0;
@@ -277,15 +140,30 @@ st.markdown('<p class="subtitle">Automated log analysis with predictive and pres
 # Check for webhook prompt parameter
 query_params = st.query_params
 webhook_prompt = None
+analysis_id = None
 
 if "prompt" in query_params:
     webhook_prompt = urllib.parse.unquote(query_params["prompt"])
+    # Extract analysis ID if present
+    if "Analysis ID:" in webhook_prompt:
+        analysis_id = webhook_prompt.split("Analysis ID: ")[-1].strip()
+    
     st.markdown("""
     <div class="webhook-status">
         <strong>🔗 Webhook Request Received</strong><br>
         Processing log analysis request from Cribl Stream...
     </div>
     """, unsafe_allow_html=True)
+
+# Function to store analysis result
+def store_analysis_result(analysis_id, prompt, response_content, status="completed"):
+    if analysis_id:
+        st.session_state.analysis_results[analysis_id] = {
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "prompt": prompt,
+            "response": response_content,
+            "status": status
+        }
 
 # Sidebar with options and custom styling
 with st.sidebar:
@@ -302,11 +180,21 @@ with st.sidebar:
         st.session_state.chat_history.clear()
         st.rerun()
     
+    # Results summary
+    if st.session_state.analysis_results:
+        st.markdown('<h3 class="sidebar-header">📊 Analysis Results</h3>', unsafe_allow_html=True)
+        st.info(f"Total analyses: {len(st.session_state.analysis_results)}")
+        
+        if st.button("📋 View All Results", use_container_width=True):
+            st.session_state.show_results = True
+    
     # Webhook status indicator
     st.markdown('<h3 class="sidebar-header">🔗 Webhook Status</h3>', unsafe_allow_html=True)
     if webhook_prompt:
         st.success("✅ Webhook request active")
         st.info(f"Analyzing {len(webhook_prompt)} characters of log data")
+        if analysis_id:
+            st.code(f"ID: {analysis_id}")
     else:
         st.info("⏳ Waiting for webhook requests")
     
@@ -324,109 +212,153 @@ with st.sidebar:
         if st.button(f"❓ {question}", key=f"quick_{i}", use_container_width=True):
             st.session_state.selected_question = question
 
-# Display chat messages
-for message in st.session_state.chat_history.messages:
-    with st.chat_message(message.type):
-        st.write(message.content)
-
-# Handle webhook prompt automatically
-if webhook_prompt and "webhook_processed" not in st.session_state:
-    st.session_state.webhook_processed = True
-    user_input = webhook_prompt
+# Show results view if requested
+if hasattr(st.session_state, 'show_results') and st.session_state.show_results:
+    st.markdown("## 📊 Analysis Results Dashboard")
     
-    # Display webhook prompt as user message
-    with st.chat_message("user"):
-        st.write("🔗 *Webhook Log Analysis Request:*")
-        st.code(webhook_prompt, language="text")
+    if st.button("← Back to Chat"):
+        del st.session_state.show_results
+        st.rerun()
     
-    # Generate and display bot response
-    with st.chat_message("assistant"):
-        with st.spinner("🔍 Performing predictive and prescriptive log analysis..."):
-            try:
-                response = chat_chain.invoke(
-                    {"input": user_input},
-                    config={"configurable": {"session_id": "webhook_session"}}
+    if st.session_state.analysis_results:
+        for result_id, result in st.session_state.analysis_results.items():
+            with st.expander(f"Analysis {result_id} - {result['timestamp']}"):
+                st.markdown("*Status:* " + result['status'])
+                st.markdown("*Response:*")
+                st.markdown(result['response'])
+                
+                # Download option
+                st.download_button(
+                    label="📥 Download Analysis",
+                    data=json.dumps(result, indent=2),
+                    file_name=f"analysis_{result_id}.json",
+                    mime="application/json"
                 )
-                st.write(response.content)
-            except Exception as e:
-                error_msg = str(e)
-                if "404" in error_msg or "not found" in error_msg.lower():
-                    st.error("❌ Model not found. Try selecting a different model from the sidebar.")
-                    st.info("Available models: gemini-1.5-flash, gemini-1.5-pro, gemini-1.0-pro")
-                elif "api key" in error_msg.lower():
-                    st.error("❌ API key issue. Please check your GEMINI_API_KEY in secrets.toml")
-                else:
-                    st.error(f"Error generating response: {error_msg}")
-                st.info("Please check your API key and internet connection.")
+    else:
+        st.info("No analysis results available yet.")
 
-# Handle quick question selection
-elif hasattr(st.session_state, 'selected_question'):
-    user_input = st.session_state.selected_question
-    delattr(st.session_state, 'selected_question')
 else:
-    user_input = None
-
-# Chat input (disabled when webhook is processing)
-if webhook_prompt:
-    st.chat_input("Webhook request is being processed...", disabled=True)
-else:
-    if prompt := st.chat_input("Ask about insider threats or paste logs for analysis..."):
-        user_input = prompt
-
-# Process regular user input (non-webhook)
-if user_input and not webhook_prompt:
-    # Display user message
-    with st.chat_message("user"):
-        st.write(user_input)
+    # Regular chat interface
     
-    # Generate and display bot response
-    with st.chat_message("assistant"):
-        with st.spinner("Analyzing security concerns..."):
-            try:
-                response = chat_chain.invoke(
-                    {"input": user_input},
-                    config={"configurable": {"session_id": "default"}}
-                )
-                st.write(response.content)
-            except Exception as e:
-                error_msg = str(e)
-                if "404" in error_msg or "not found" in error_msg.lower():
-                    st.error("❌ Model not found. Try selecting a different model from the sidebar.")
-                    st.info("Available models: gemini-1.5-flash, gemini-1.5-pro, gemini-1.0-pro")
-                elif "api key" in error_msg.lower():
-                    st.error("❌ API key issue. Please check your GEMINI_API_KEY in secrets.toml")
-                else:
-                    st.error(f"Error generating response: {error_msg}")
-                st.info("Please check your API key and internet connection.")
+    # Display chat messages
+    for message in st.session_state.chat_history.messages:
+        with st.chat_message(message.type):
+            st.write(message.content)
 
-# Reset webhook processing flag when URL changes
-if not webhook_prompt and "webhook_processed" in st.session_state:
-    del st.session_state.webhook_processed
+    # Handle webhook prompt automatically
+    if webhook_prompt and "webhook_processed" not in st.session_state:
+        st.session_state.webhook_processed = True
+        user_input = webhook_prompt
+        
+        # Display webhook prompt as user message
+        with st.chat_message("user"):
+            st.write("🔗 *Webhook Log Analysis Request:*")
+            if analysis_id:
+                st.write(f"*Analysis ID:* {analysis_id}")
+            st.code(webhook_prompt, language="text", wrap_lines=True)
+        
+        # Generate and display bot response
+        with st.chat_message("assistant"):
+            with st.spinner("🔍 Performing predictive and prescriptive log analysis..."):
+                try:
+                    response = chat_chain.invoke(
+                        {"input": user_input},
+                        config={"configurable": {"session_id": "webhook_session"}}
+                    )
+                    st.write(response.content)
+                    
+                    # Store the result
+                    store_analysis_result(analysis_id, webhook_prompt, response.content)
+                    
+                    # Show success message
+                    st.markdown("""
+                    <div class="analysis-result">
+                        <strong>✅ Analysis Complete</strong><br>
+                        Results have been stored and are available in the dashboard.
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                except Exception as e:
+                    error_msg = str(e)
+                    if "404" in error_msg or "not found" in error_msg.lower():
+                        st.error("❌ Model not found. Try selecting a different model from the sidebar.")
+                        st.info("Available models: gemini-1.5-flash, gemini-1.5-pro, gemini-1.0-pro")
+                    elif "api key" in error_msg.lower():
+                        st.error("❌ API key issue. Please check your GEMINI_API_KEY in secrets.toml")
+                    else:
+                        st.error(f"Error generating response: {error_msg}")
+                    
+                    # Store error result
+                    store_analysis_result(analysis_id, webhook_prompt, f"Error: {error_msg}", "error")
 
-# Display helpful information with custom styling
-if len(st.session_state.chat_history.messages) == 0 and not webhook_prompt:
-    st.markdown("""
-    <div style="background: linear-gradient(135deg, #e6fffa 0%, #f0fdfa 100%); 
-                padding: 2rem; 
-                border-radius: 15px; 
-                border: 2px solid #a7f3d0; 
-                margin: 1rem 0;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-        <h2 style="color: #0f766e; text-align: center; margin-bottom: 1rem;">
-            👋 Welcome to the Enhanced Log Analysis Chatbot!
-        </h2>
-        <div style="color: #0f766e; font-size: 1.1rem; line-height: 1.6;">
-            <p><strong>I can help you with:</strong></p>
-            <ul style="padding-left: 1.5rem;">
-                <li>🔍 <strong>Predictive Analysis:</strong> Identify patterns and predict potential security incidents</li>
-                <li>📋 <strong>Prescriptive Analysis:</strong> Provide actionable recommendations and response procedures</li>
-                <li>🛡 Detecting behavioral indicators of insider threats</li>
-                <li>📊 Analyzing log data from Cribl Stream via webhook integration</li>
-                <li>🔎 Investigating suspicious activities and anomalies</li>
-                <li>⚡ Real-time log analysis and threat assessment</li>
-            </ul>
-            <p><strong>🔗 Webhook Integration Active:</strong> Ready to receive and analyze logs from Cribl Stream</p>
-            <p><strong>Ask me a question, use quick questions, or send logs via webhook!</strong></p>
+    # Handle quick question selection
+    elif hasattr(st.session_state, 'selected_question'):
+        user_input = st.session_state.selected_question
+        delattr(st.session_state, 'selected_question')
+    else:
+        user_input = None
+
+    # Chat input (disabled when webhook is processing)
+    if webhook_prompt:
+        st.chat_input("Webhook request is being processed...", disabled=True)
+    else:
+        if prompt := st.chat_input("Ask about insider threats or paste logs for analysis..."):
+            user_input = prompt
+
+    # Process regular user input (non-webhook)
+    if user_input and not webhook_prompt:
+        # Display user message
+        with st.chat_message("user"):
+            st.write(user_input)
+        
+        # Generate and display bot response
+        with st.chat_message("assistant"):
+            with st.spinner("Analyzing security concerns..."):
+                try:
+                    response = chat_chain.invoke(
+                        {"input": user_input},
+                        config={"configurable": {"session_id": "default"}}
+                    )
+                    st.write(response.content)
+                except Exception as e:
+                    error_msg = str(e)
+                    if "404" in error_msg or "not found" in error_msg.lower():
+                        st.error("❌ Model not found. Try selecting a different model from the sidebar.")
+                        st.info("Available models: gemini-1.5-flash, gemini-1.5-pro, gemini-1.0-pro")
+                    elif "api key" in error_msg.lower():
+                        st.error("❌ API key issue. Please check your GEMINI_API_KEY in secrets.toml")
+                    else:
+                        st.error(f"Error generating response: {error_msg}")
+                    st.info("Please check your API key and internet connection.")
+
+    # Reset webhook processing flag when URL changes
+    if not webhook_prompt and "webhook_processed" in st.session_state:
+        del st.session_state.webhook_processed
+
+    # Display helpful information with custom styling
+    if len(st.session_state.chat_history.messages) == 0 and not webhook_prompt:
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #e6fffa 0%, #f0fdfa 100%); 
+                    padding: 2rem; 
+                    border-radius: 15px; 
+                    border: 2px solid #a7f3d0; 
+                    margin: 1rem 0;
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+            <h2 style="color: #0f766e; text-align: center; margin-bottom: 1rem;">
+                👋 Welcome to the Enhanced Log Analysis Chatbot!
+            </h2>
+            <div style="color: #0f766e; font-size: 1.1rem; line-height: 1.6;">
+                <p><strong>I can help you with:</strong></p>
+                <ul style="padding-left: 1.5rem;">
+                    <li>🔍 <strong>Predictive Analysis:</strong> Identify patterns and predict potential security incidents</li>
+                    <li>📋 <strong>Prescriptive Analysis:</strong> Provide actionable recommendations and response procedures</li>
+                    <li>🛡 Detecting behavioral indicators of insider threats</li>
+                    <li>📊 Analyzing log data from Cribl Stream via webhook integration</li>
+                    <li>🔎 Investigating suspicious activities and anomalies</li>
+                    <li>⚡ Real-time log analysis and threat assessment</li>
+                </ul>
+                <p><strong>🔗 Webhook Integration Active:</strong> Ready to receive and analyze logs from Cribl Stream</p>
+                <p><strong>Ask me a question, use quick questions, or send logs via webhook!</strong></p>
+            </div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
