@@ -81,13 +81,16 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS
+# Custom CSS for styling
+# Custom CSS for teal and white theme
 st.markdown("""
 <style>
+    /* Main background */
     .stApp {
         background-color: #f0fdfa;
     }
     
+    /* Header styling */
     .main-header {
         background: linear-gradient(90deg, #0d9488, #14b8a6);
         padding: 1rem;
@@ -96,6 +99,7 @@ st.markdown("""
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
+    /* Title styling */
     .main-header h1 {
         color: white;
         margin: 0;
@@ -103,6 +107,7 @@ st.markdown("""
         font-weight: 600;
     }
     
+    /* Subtitle styling */
     .subtitle {
         color: #0f766e;
         text-align: center;
@@ -110,47 +115,146 @@ st.markdown("""
         margin-bottom: 1rem;
     }
     
-    .webhook-status {
-        background-color: #fef3c7;
-        border-left: 4px solid #f59e0b;
-        padding: 1rem;
-        border-radius: 8px;
-        margin: 1rem 0;
+    /* Sidebar styling */
+    .css-1d391kg {
+        background-color: white;
     }
     
-    .analysis-result {
-        background-color: #f0fdf4;
-        border-left: 4px solid #22c55e;
-        padding: 1rem;
-        border-radius: 8px;
-        margin: 1rem 0;
+    /* Chat input styling */
+    .stChatInput > div > div {
+        background-color: white;
+        border: 2px solid #14b8a6;
+        border-radius: 10px;
     }
     
-    .error-result {
-        background-color: #fef2f2;
-        border-left: 4px solid #ef4444;
-        padding: 1rem;
+    /* Button styling */
+    .stButton > button {
+        background-color: #14b8a6;
+        color: white;
+        border: none;
         border-radius: 8px;
-        margin: 1rem 0;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
     }
     
-    .log-preview {
-        background-color: #f3f4f6;
-        padding: 1rem;
-        border-radius: 8px;
-        font-family: monospace;
-        white-space: pre-wrap;
-        max-height: 300px;
-        overflow-y: auto;
-        margin: 1rem 0;
+    .stButton > button:hover {
+        background-color: #0d9488;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(20, 184, 166, 0.3);
     }
     
+    /* Selectbox styling */
+    .stSelectbox > div > div {
+        background-color: #f3f4f6 !important;
+        border: 1px solid #14b8a6;
+        border-radius: 8px;
+        color: #000000 !important;
+    }
+    
+    /* Selectbox dropdown options */
+    .stSelectbox > div > div > div {
+        background-color: #f3f4f6 !important;
+        color: #000000 !important;
+    }
+    
+    /* Selectbox label text */
+    .stSelectbox label {
+        color: #000000 !important;
+        font-weight: 500;
+    }
+    
+    /* Selectbox selected value text */
+    .stSelectbox > div > div > div > div {
+        color: #000000 !important;
+    }
+    
+    /* Chat input label */
+    .stChatInput label {
+        color: #000000 !important;
+        font-weight: 500;
+    }
+    
+    /* Chat input placeholder and text */
+    .stChatInput input {
+        color: #000000 !important;
+    }
+    
+    .stChatInput input::placeholder {
+        color: #666666 !important;
+    }
+    
+    /* Chat message text styling */
+    .stChatMessage {
+        background-color: white;
+        border-radius: 10px;
+        border: 1px solid #a7f3d0;
+        margin: 0.5rem 0;
+    }
+    
+    /* Generated response text only */
+    .stChatMessage div {
+        color: #000000 !important;
+    }
+    
+    /* Info box styling */
+    .stInfo {
+        background-color: #e6fffa;
+        border-left: 4px solid #14b8a6;
+        color: #0f766e;
+    }
+    
+    /* Chat messages styling */
+    .stChatMessage {
+        background-color: white;
+        border-radius: 10px;
+        border: 1px solid #a7f3d0;
+        margin: 0.5rem 0;
+    }
+    
+    /* User message styling */
+    .stChatMessage[data-testid="user"] {
+        background-color: #f0fdfa;
+        border-left: 4px solid #14b8a6;
+    }
+    
+    /* Assistant message styling */
+    .stChatMessage[data-testid="assistant"] {
+        background-color: white;
+        border-left: 4px solid #0d9488;
+    }
+    
+    /* Sidebar headers */
     .sidebar-header {
         color: #0f766e;
-        margin-bottom: 1rem;
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #a7f3d0;
+    }
+    
+    /* Loading spinner */
+    .stSpinner {
+        color: #14b8a6;
+    }
+    
+    /* Error styling */
+    .stError {
+        background-color: #fef2f2;
+        border-left: 4px solid #ef4444;
+        color: #dc2626;
+    }
+    st
+    /* Success styling */
+    .stSuccess {
+        background-color: #f0fdf4;
+        border-left: 4px solid #22c55e;
+        color: #16a34a;
     }
 </style>
 """, unsafe_allow_html=True)
+
 
 # Custom header
 st.markdown("""
